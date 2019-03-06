@@ -1,6 +1,6 @@
 {
   "name": "todo-app-react",
-  "homepage": "https://olgatitarenko.github.io/tabs-react/",
+  "homepage": "https://olgatitarenko.github.io/todo-app-react/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
