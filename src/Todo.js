@@ -9,7 +9,7 @@ class Todo extends React.Component {
         ],
         oldTodos: [],
         showOld: false,
-        newItemText: "",
+        newItemText: '',
         checkAll: false
     };
 
@@ -17,13 +17,31 @@ class Todo extends React.Component {
         this.setState({
             newItemText: text
         });
+        console.log(this.state.newItemText);
     };
 
-    onItemAdded(event) {
+    onItemAdded = (event) => {
+        event.preventDefault();
         if ("" === this.state.newItemText) {
             return;
         }
+        this.setState(({todos, newItemText}) => {
+            const newTodo = {
+                value: todos.length + 1,
+                text: newItemText,
+                done: false,
+                isVisible: true
+            };
+            return {
+                todos: [...todos, newTodo],
+                newItemText: ""
+            };
+        });
+        /*
         if (event.key === "Enter") {
+            if ("" === this.state.newItemText) {
+                return;
+            }
             this.setState(({ todos, newItemText }) => {
                 let newTodo = {
                     value: todos.length + 1,
@@ -31,169 +49,175 @@ class Todo extends React.Component {
                     done: false,
                     isVisible: true
                 };
-
                 return {
                     todos: [...todos, newTodo],
                     newItemText: ""
                 };
             });
-        }
+        }*/
     }
 
-    onButtonAdded() {
-        if ("" === this.state.newItemText) {
-            return;
-        }
-        this.setState(({ todos, newItemText }) => {
-            let newTodo = {
-                value: todos.length + 1,
-                text: newItemText,
-                done: false,
-                isVisible: true
-            };
-
+    onCheckedChange(index) {
+        this.setState((prevState) => {
+            let newTodos = prevState.todos;
+            newTodos.map((todo) => {
+                if (todo.value === index) {
+                    todo.done = !todo.done;
+                }
+            });
             return {
-                todos: [...todos, newTodo],
-                newItemText: ""
+                todos : newTodos
             };
-        });
-    }
-    onCheckedChange(todo) {
-        const todoChecked = todo;
-        todoChecked.done = !todoChecked.done;
-        this.setState({ todoChecked });
+          })
     }
 
     onAllItemsCheck() {
-        let todo = this.state;
-        todo.checkAll = !todo.checkAll;
-        const check = todo.checkAll;
-        todo.todos.map(todo => {
-            todo.done = check;
+        this.setState((prewState)=>{
+            let newTodos = [...prewState.todos];
+            const newCheckAll = !prewState.checkAll;
+            newTodos.forEach((item)=> item.done = newCheckAll);
+            return {
+                todos : newTodos,
+                checkAll : newCheckAll
+            }
         });
-        this.setState({ todo });
     }
 
     onDeleteItem(todo) {
-        const todos = this.state.todos.filter(item => item !== todo);
-        const oldTodos = this.state.oldTodos;
-        oldTodos.push(todo);
-        this.setState({ todos, oldTodos });
-    }
-
-    onButtonAll() {
-        const todos = this.state.todos;
-        todos.map(todo => {
-            todo.isVisible = true;
-        });
-        this.setState({ todos });
-    }
-
-    onButtonDone() {
-        const todos = this.state.todos;
-        todos.map(todo => {
-            if (!todo.done) {
-                todo.isVisible = false;
-            }
-        });
-        this.setState({ todos });
-    }
-
-    onButtonActive() {
-        const todos = this.state.todos;
-        todos.map(todo => {
-            if (todo.done) {
-                todo.isVisible = false;
-            }
-        });
-        this.setState({ todos });
-    }
-
-    onButtonClearDone() {
-        const todos = this.state.todos.filter(item => !item.done);
-        const oldTodos = this.state.todos.filter(item => item.done);
-        this.setState({ todos, oldTodos });
-    }
-
-    onButtonShowOld() {
-        this.setState({
-            showOld: true
+        this.setState((prevState) => {
+            const todos = prevState.todos.filter(item => item !== todo);
+            const oldText =[ ...prevState.oldTodos, todo.text];
+            return {
+                todos: todos,
+                oldTodos:  oldText
+            };
         });
     }
+
+    onButtonClick(typeButton) {
+        if ( typeButton === 'showAll') {
+            this.setState((prevState) => {
+                let todos = prevState.todos;
+                todos.forEach((todo) => todo.isVisible = true);
+                return { todos };
+            });
+        }
+        if ( typeButton === 'showDone') {
+            this.setState((prevState) => {
+                const todos = prevState.todos;
+                todos.forEach((todo) => {
+                    if (todo.done) {
+                        todo.isVisible = true;
+                    } else {
+                        todo.isVisible = false;
+                    }
+                });
+                return { todos };
+            });
+        }
+        if ( typeButton === 'showActive') {
+            this.setState((prevState) => {
+                const todos = prevState.todos;
+                todos.forEach((todo) => {
+                    if (!todo.done) {
+                        todo.isVisible = true;
+                    } else {
+                        todo.isVisible = false;
+                    }
+                });
+                return { todos };
+            })
+        }
+        if ( typeButton === 'clearDone') {
+            this.setState((prevState) => {
+                const todos = prevState.todos.filter(item => !item.done);
+                const oldTodos = prevState.todos.filter(item => item.done);
+                return {
+                    todos,
+                    oldTodos : [...prevState.oldTodos, ...oldTodos]
+                };
+            });
+        }
+        if ( typeButton === 'showOld') {
+            this.setState({
+                showOld: true
+            });
+        }
+    }
+
     render() {
         const state = this.state.todos.filter(todo => todo.isVisible === true);
+
         return (
             <div className="Todo">
-            <h2 className="Todo__title">My Todo</h2>
-        <input
-        type="checkbox"
-        name="chackAll"
-        checked={state.checkAll}
-        onChange={() => this.onAllItemsCheck()}
-        />
-        <input
-        type="text"
-        className="Todo__new-item-text"
-        value={state.newItemText}
-        onChange={event => {
-            this.onNewItemTextChange(event.target.value);
-        }}
-        onKeyPress={event => {
-            this.onItemAdded(event);
-        }}
-        />
-        <button
-        className="Todo__add-button"
-        onClick={() => this.onButtonAdded()}
-    >
-        Add
-        </button>
-        <ul className="Todo__list">
-            {state.map(todo => (
-                    <Todo.Item
-                key={todo.value}
-                value={todo.value}
-                checked={todo.done}
-                onChange={() => this.onCheckedChange(todo)}
-        onDelete={() => this.onDeleteItem(todo)}
-    >
-        {todo.text}
-    </Todo.Item>
-    ))}
-    </ul>
-
-        <br />
-        <button className="Todo__add-button" onClick={() => this.onButtonAll()}>
-        All
-        </button>
-        <button
-        className="Todo__add-button"
-        onClick={() => this.onButtonDone()}
-    >
-        Done
-        </button>
-        <button
-        className="Todo__add-button"
-        onClick={() => this.onButtonActive()}
-    >
-        Active
-        </button>
-        <button
-        className="Todo__add-button"
-        onClick={() => this.onButtonClearDone()}
-    >
-        Clear done
-        </button>
-        <button
-        className="Todo__add-button"
-        onClick={() => this.onButtonShowOld()}
-    >
-        Show cleared todo
-        </button>
-        <p>{state.length} has left</p>
-        <Todo.Old showStatus={this.state.showOld} value={this.state.oldTodos} />
-        </div>
-    );
+                <h2 className="Todo__title">My Todo</h2>
+                <input
+                    type="checkbox"
+                    name="chackAll"
+                    checked={this.state.checkAll}
+                    onChange={() => this.onAllItemsCheck()}
+                />
+                <form onSubmit={this.onItemAdded}>
+                    <input
+                        type="text"
+                        className="Todo__new-item-text"
+                        value={this.state.newItemText}
+                        onChange={event => {
+                            this.onNewItemTextChange(event.target.value);
+                        }}
+                    />
+                    <button  className="Todo__add-button" >
+                        Add
+                    </button>
+                </form>
+                <ul className="Todo__list">
+                    {state.map(todo => (
+                        <Todo.Item
+                            key={todo.value}
+                            value={todo.value}
+                            checked={todo.done}
+                            onChange={() => this.onCheckedChange(todo.value)}
+                            onDelete={() => this.onDeleteItem(todo)}
+                        >
+                            {todo.text}
+                        </Todo.Item>
+                    ))}
+                </ul>
+                <br />
+                <button
+                    className="Todo__add-button"
+                    onClick={() => this.onButtonClick('showAll')}
+                >
+                    All
+                </button>
+                <button
+                    className="Todo__add-button"
+                    onClick={() => this.onButtonClick('showDone')}
+                >
+                    Done
+                </button>
+                <button
+                    className="Todo__add-button"
+                    onClick={() => this.onButtonClick('showActive')}
+                >
+                    Active
+                </button>
+                <button
+                    className="Todo__add-button"
+                    onClick={() => this.onButtonClick('clearDone')}
+                >
+                    Clear done
+                </button>
+                <button
+                    className="Todo__add-button"
+                    onClick={() => this.onButtonClick('showOld')}
+                >
+                    Show cleared todo
+                </button>
+                <p>{state.length} has left</p>
+                <Todo.Old showStatus={this.state.showOld} oldTodos={this.state.oldTodos} />
+            </div>
+        );
     }
 }
 
@@ -201,40 +225,37 @@ Todo.Item = ({ value, children, checked, onChange, onDelete }) => {
     const styleLi = checked ? "Todo__item Todo__item_done" : "Todo__item";
     return (
         <div>
-        <input
-    type="checkbox"
-    name="todoItem"
-    checked={checked}
-    onChange={() => onChange()}
-    />
-    <li className={styleLi}>
-        {children}
-        <button onClick={() => onDelete()}>x</button>
-    </li>
-    </div>
-);
+            <input
+                type="checkbox"
+                name="todoItem"
+                checked={checked}
+                onChange={() => onChange()}
+            />
+            <li className={styleLi}>
+                {children}
+                <button onClick={() => onDelete()}>x</button>
+            </li>
+        </div>
+    );
 };
 
-Todo.Old = ({ showStatus, value }) => {
+Todo.Old = ({ showStatus, oldTodos }) => {
     if (!showStatus) {
-        return <div>Clear todo what you done</div>;
+        return <div>Work to done todos! =^_^=</div>;
+    } else {
+        console.log(oldTodos);
+    return (
+        <div>
+            <ul>
+                {oldTodos.map(todo =>
+                <li key={todo.value}>
+                    {todo.text}
+                </li>
+                ) }
+            </ul>
+        </div>
+        );
     }
-    if (0 === value.length) {
-        return <div>No done todos, make clear</div>;
-    }
-
-    if (1 === value.length) {
-        console.log(value[0]);
-        return <div>{value[0].text}</div>;
-    }
-    if (value.length > 1) {
-        let resultDiv = "";
-        value.map(item => {
-            resultDiv += " --- " + item.text;
-        });
-        return <div>{resultDiv}</div>;
-    }
-    return (<div>Work with smile =^_^= </div>);
 };
 
 export default Todo;
