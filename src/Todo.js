@@ -3,10 +3,11 @@ import React from "react";
 class Todo extends React.Component {
     state = {
         todos: [
-            { value: 1, text: "111", done: false, isVisible: true },
-            { value: 2, text: "222", done: true, isVisible: true },
-            { value: 3, text: "333", done: false, isVisible: true }
+            { id: 1, text: "111", done: false, isVisible: true },
+            { id: 2, text: "222", done: true, isVisible: true },
+            { id: 3, text: "333", done: false, isVisible: true }
         ],
+        filterBy:'',
         oldTodos: [],
         showOld: false,
         newItemText: '',
@@ -17,7 +18,6 @@ class Todo extends React.Component {
         this.setState({
             newItemText: text
         });
-        console.log(this.state.newItemText);
     };
 
     onItemAdded = (event) => {
@@ -27,7 +27,7 @@ class Todo extends React.Component {
         }
         this.setState(({todos, newItemText}) => {
             const newTodo = {
-                value: todos.length + 1,
+                id: +(new Date()),
                 text: newItemText,
                 done: false,
                 isVisible: true
@@ -36,46 +36,28 @@ class Todo extends React.Component {
                 todos: [...todos, newTodo],
                 newItemText: ""
             };
-        });
-        /*
-        if (event.key === "Enter") {
-            if ("" === this.state.newItemText) {
-                return;
-            }
-            this.setState(({ todos, newItemText }) => {
-                let newTodo = {
-                    value: todos.length + 1,
-                    text: newItemText,
-                    done: false,
-                    isVisible: true
-                };
-                return {
-                    todos: [...todos, newTodo],
-                    newItemText: ""
-                };
-            });
-        }*/
+        })
     }
 
     onCheckedChange(index) {
         this.setState((prevState) => {
             let newTodos = prevState.todos;
             newTodos.map((todo) => {
-                if (todo.value === index) {
+                if (todo.id === index) {
                     todo.done = !todo.done;
+
                 }
             });
             return {
-                todos : newTodos
-            };
-          })
+                todos: newTodos
+            }
+        })
     }
 
     onAllItemsCheck() {
         this.setState((prewState)=>{
-            let newTodos = [...prewState.todos];
             const newCheckAll = !prewState.checkAll;
-            newTodos.forEach((item)=> item.done = newCheckAll);
+            const newTodos = prewState.todos.map(todo => ({...todo, done: newCheckAll}));
             return {
                 todos : newTodos,
                 checkAll : newCheckAll
@@ -83,70 +65,49 @@ class Todo extends React.Component {
         });
     }
 
-    onDeleteItem(todo) {
+    onDeleteItem(index) {
         this.setState((prevState) => {
-            const todos = prevState.todos.filter(item => item !== todo);
-            const oldText =[ ...prevState.oldTodos, todo.text];
+            const todos = prevState.todos.filter(item => item.id !== index);
+            const oldTodo = prevState.todos.filter(item => item.id === index);
+            const oldTodos =[ ...prevState.oldTodos, oldTodo];
             return {
-                todos: todos,
-                oldTodos:  oldText
+                todos,
+                oldTodos
             };
         });
     }
 
     onButtonClick(typeButton) {
-        if ( typeButton === 'showAll') {
-            this.setState((prevState) => {
-                let todos = prevState.todos;
-                todos.forEach((todo) => todo.isVisible = true);
-                return { todos };
-            });
-        }
-        if ( typeButton === 'showDone') {
-            this.setState((prevState) => {
-                const todos = prevState.todos;
-                todos.forEach((todo) => {
-                    if (todo.done) {
-                        todo.isVisible = true;
-                    } else {
-                        todo.isVisible = false;
-                    }
-                });
-                return { todos };
-            });
-        }
-        if ( typeButton === 'showActive') {
-            this.setState((prevState) => {
-                const todos = prevState.todos;
-                todos.forEach((todo) => {
-                    if (!todo.done) {
-                        todo.isVisible = true;
-                    } else {
-                        todo.isVisible = false;
-                    }
-                });
-                return { todos };
-            })
-        }
-        if ( typeButton === 'clearDone') {
-            this.setState((prevState) => {
-                const todos = prevState.todos.filter(item => !item.done);
-                const oldTodos = prevState.todos.filter(item => item.done);
-                return {
-                    todos,
-                    oldTodos : [...prevState.oldTodos, ...oldTodos]
-                };
-            });
-        }
-        if ( typeButton === 'showOld') {
-            this.setState({
-                showOld: true
-            });
+        this.setState({filterBy: typeButton})
+    }
+    onButtonCleanDone() {
+        this.setState((prevState) => {
+            const todos = prevState.todos.filter(item => !item.done);
+            const oldTodos = prevState.todos.filter(item => item.done);
+            return {
+                todos,
+                oldTodos : [...prevState.oldTodos, ...oldTodos]
+            };
+        });
+    }
+
+    onButtonShowOld() {
+        this.setState((prevState) => {
+            return { showOld: !prevState.showOld }
+        })
+    }
+
+    filterTodos() {
+        const {todos, filterBy} = this.state;
+        switch (filterBy) {
+            case 'showDone': return todos.filter(todo => todo.done);
+            case 'showActive': return todos.filter(todo => !todo.done);
+            default: return todos;
         }
     }
 
     render() {
-        const state = this.state.todos.filter(todo => todo.isVisible === true);
+        const state =  this.filterTodos();
 
         return (
             <div className="Todo">
@@ -173,11 +134,11 @@ class Todo extends React.Component {
                 <ul className="Todo__list">
                     {state.map(todo => (
                         <Todo.Item
-                            key={todo.value}
-                            value={todo.value}
+                            key={todo.id}
+                            value={todo.id}
                             checked={todo.done}
-                            onChange={() => this.onCheckedChange(todo.value)}
-                            onDelete={() => this.onDeleteItem(todo)}
+                            onChange={() => this.onCheckedChange(todo.id)}
+                            onDelete={() => this.onDeleteItem(todo.id)}
                         >
                             {todo.text}
                         </Todo.Item>
@@ -204,13 +165,13 @@ class Todo extends React.Component {
                 </button>
                 <button
                     className="Todo__add-button"
-                    onClick={() => this.onButtonClick('clearDone')}
+                    onClick={() => this.onButtonCleanDone()}
                 >
                     Clear done
                 </button>
                 <button
                     className="Todo__add-button"
-                    onClick={() => this.onButtonClick('showOld')}
+                    onClick={() => this.onButtonShowOld()}
                 >
                     Show cleared todo
                 </button>
@@ -221,7 +182,7 @@ class Todo extends React.Component {
     }
 }
 
-Todo.Item = ({ value, children, checked, onChange, onDelete }) => {
+Todo.Item = ({  value, children, checked, onChange, onDelete }) => {
     const styleLi = checked ? "Todo__item Todo__item_done" : "Todo__item";
     return (
         <div>
@@ -231,7 +192,7 @@ Todo.Item = ({ value, children, checked, onChange, onDelete }) => {
                 checked={checked}
                 onChange={() => onChange()}
             />
-            <li className={styleLi}>
+            <li className={styleLi} key={value}>
                 {children}
                 <button onClick={() => onDelete()}>x</button>
             </li>
@@ -243,12 +204,11 @@ Todo.Old = ({ showStatus, oldTodos }) => {
     if (!showStatus) {
         return <div>Work to done todos! =^_^=</div>;
     } else {
-        console.log(oldTodos);
     return (
         <div>
             <ul>
                 {oldTodos.map(todo =>
-                <li key={todo.value}>
+                <li key={todo.id}>
                     {todo.text}
                 </li>
                 ) }
