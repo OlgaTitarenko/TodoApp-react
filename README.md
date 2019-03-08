@@ -1,6 +1,6 @@
 Prew (https://olgatitarenko.github.io/todo-app-react/.)
 ---
-Pull Request(https://github.com/OlgaTitarenko/todo-app-react/pull/2)
+Pull Request(https://github.com/OlgaTitarenko/todo-app-react/pull/3)
 ---
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
